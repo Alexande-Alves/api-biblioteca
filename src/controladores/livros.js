@@ -36,7 +36,6 @@ const listarLivros = async (req, res) => {
     return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 };
-
 const cadastrarLivro = async (req, res) => {
   const { id } = req.params;
   const { nome, genero, editora, data_publicacao } = req.body;
@@ -53,6 +52,16 @@ const cadastrarLivro = async (req, res) => {
       return res.status(404).json({ mensagem: "O autor não existe" });
     }
 
+    const livroExistenteQuery = `
+      SELECT * FROM livros 
+      WHERE nome = $1
+    `;
+    const livroExistenteResult = await pool.query(livroExistenteQuery, [nome]);
+
+    if (livroExistenteResult.rowCount > 0) {
+      return res.status(400).json({ mensagem: "Livro já cadastrado" });
+    }
+
     const livroQuery = `
       INSERT INTO livros (autor_id, nome, genero, editora, data_publicacao)
       VALUES ($1, $2, $3, $4, $5)
@@ -66,11 +75,13 @@ const cadastrarLivro = async (req, res) => {
       data_publicacao,
     ]);
 
-    return res.json(livroResult.rows);
+    return res.json(livroResult.rows[0]);
   } catch (error) {
+    console.error("Erro na função cadastrarLivro:", error);
     return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 };
+
 
 const deletarLivro = async (req, res) => {
   const { id } = req.params;
@@ -105,6 +116,16 @@ const editarLivro = async (req, res) => {
       return res.status(404).json({ mensagem: "O autor não existe" });
     }
 
+    const livroExistenteQuery = `
+      SELECT * FROM livros 
+      WHERE nome = $1 AND id != $2
+    `;
+    const livroExistenteResult = await pool.query(livroExistenteQuery, [nome, id]);
+
+    if (livroExistenteResult.rowCount > 0) {
+      return res.status(400).json({ mensagem: "Livro já cadastrado para outro autor" });
+    }
+
     const livroQuery = `
       UPDATE livros
       SET nome = $1, genero = $2, editora = $3, data_publicacao = $4
@@ -126,6 +147,36 @@ const editarLivro = async (req, res) => {
 
     return res.json({ mensagem: "Livro editado com sucesso", livro: rows[0] });
   } catch (error) {
+    console.error("Erro na função editarLivro:", error);
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+};
+
+const buscarLivroPorId = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verifica se o livro existe
+    const livroQuery = `SELECT * FROM livros WHERE id = $1`;
+    const livroResult = await pool.query(livroQuery, [id]);
+
+    if (livroResult.rowCount === 0) {
+      return res.status(404).json({ mensagem: "Livro não encontrado" });
+    }
+
+    const livro = livroResult.rows[0];
+
+    // Verifica se o autor do livro existe
+    const autorQuery = `SELECT * FROM autores WHERE id = $1`;
+    const autorResult = await pool.query(autorQuery, [livro.autor_id]);
+
+    if (autorResult.rowCount === 0) {
+      return res.status(404).json({ mensagem: "Autor do livro não encontrado" });
+    }
+
+    return res.json({ livro, autor: autorResult.rows[0] });
+  } catch (error) {
+    console.error("Erro na função buscarLivroPorId:", error);
     return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 };
@@ -137,4 +188,5 @@ module.exports = {
   listarLivros,
   deletarLivro,
   editarLivro,
+  buscarLivroPorId,
 };

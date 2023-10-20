@@ -14,9 +14,16 @@ const cadastrarAutor = async (req, res) => {
   }
 
   try {
-    const query =
+    const verificaAutorQuery = "SELECT * FROM autores WHERE nome = $1";
+    const autorExistente = await pool.query(verificaAutorQuery, [nome]);
+
+    if (autorExistente.rows.length > 0) {
+      return res.status(400).json({ mensagem: "Autor já cadastrado" });
+    }
+
+    const inserirAutorQuery =
       "INSERT INTO autores (nome, idade) VALUES ($1, $2) RETURNING *";
-    const { rows } = await pool.query(query, [nome, idade]);
+    const { rows } = await pool.query(inserirAutorQuery, [nome, idade]);
 
     return res.status(201).json(rows[0]);
   } catch (error) {
@@ -82,8 +89,14 @@ const editarAutor = async (req, res) => {
     return res.status(400).json({ mensagem: "Dados incompletos ou inválidos" });
   }
 
+  const verificaAutorQuery = "SELECT * FROM autores WHERE nome = $1";
+  const autorExistente = await pool.query(verificaAutorQuery, [nome]);
+
+  if (autorExistente.rows.length > 0) {
+    return res.status(400).json({ mensagem: "Autor já cadastrado" });
+  }
+
   try {
-    // Verificar se o autor existe
     const autorQuery = "SELECT * FROM autores WHERE id = $1";
     const autorResult = await pool.query(autorQuery, [id]);
 
@@ -91,7 +104,6 @@ const editarAutor = async (req, res) => {
       return res.status(404).json({ mensagem: "O autor não existe" });
     }
 
-    // Atualizar os dados do autor
     const editarAutorQuery = `
       UPDATE autores
       SET nome = $1, idade = $2
