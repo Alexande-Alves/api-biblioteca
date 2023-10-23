@@ -66,7 +66,6 @@ const deletarAutor = async (req, res) => {
       });
     }
 
-    // Agora, exclua o autor
     const autorQuery = "DELETE FROM autores WHERE id = $1";
     const { rowCount } = await pool.query(autorQuery, [id]);
 
