@@ -1,6 +1,6 @@
-const express = require("express");
+const { Router } = require("express");
 
-const rotas = express();
+const rotas = Router();
 
 const {
   cadastrarAutor,
@@ -30,7 +30,7 @@ rotas.post("/livros/:id/livro", cadastrarLivro);
 rotas.get("/livros", listarLivros);
 rotas.delete("/livros/:id", deletarLivro);
 rotas.patch("/livros/:id", editarLivro);
-rotas.get("/livros/:id", buscarLivroPorId)
+rotas.get("/livros/:id", buscarLivroPorId);
 
 rotas.post("/reset", reset);
 

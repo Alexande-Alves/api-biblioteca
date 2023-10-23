@@ -133,18 +133,18 @@ const exibirAutorPorId = async (req, res) => {
 
   try {
     const query = `
-        SELECT 
-          a.id,
-          a.nome,
-          a.idade,
-          l.id AS livro_id,
-          l.nome AS livro_nome,
-          l.genero AS livro_genero, 
-          l.editora AS livro_editora, 
-          l.data_publicacao AS livro_data_publicacao 
-        FROM autores a 
-        INNER JOIN livros l ON a.id = l.autor_id 
-        WHERE a.id = $1
+      SELECT 
+        a.id,
+        a.nome,
+        a.idade,
+        l.id AS livro_id,
+        l.nome AS livro_nome,
+        l.genero AS livro_genero, 
+        l.editora AS livro_editora, 
+        l.data_publicacao AS livro_data_publicacao 
+      FROM autores a 
+      INNER JOIN livros l ON a.id = l.autor_id 
+      WHERE a.id = $1
     `;
     const { rowCount, rows } = await pool.query(query, [id]);
 
@@ -157,7 +157,7 @@ const exibirAutorPorId = async (req, res) => {
       nome: livro.livro_nome,
       genero: livro.livro_genero,
       editora: livro.livro_editora,
-      data_publicacao: livro.livro_data_publicacao,
+      data_publicacao: new Date(livro.livro_data_publicacao).toISOString().split('T')[0],
     }));
 
     const autor = {
